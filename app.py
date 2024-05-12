@@ -18,7 +18,7 @@ app.add_middleware(
 
 @app.get("/api/teste")
 async def teste():
-    return "ola mundo"
+    return "vc e um viadao"
 
 # @app.get("/payment/create_payment")
 # async def create_payment():
