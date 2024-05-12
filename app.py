@@ -16,7 +16,7 @@ app.add_middleware(
 
 
 
-@app.get("/teste")
+@app.get("/api/teste")
 async def teste():
     return "ola mundo"
 
