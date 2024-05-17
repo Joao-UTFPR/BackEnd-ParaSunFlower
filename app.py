@@ -113,11 +113,11 @@ async def payment_updated_webhook(request: Request):
     if response.get("status") == "approved":
         time, payment_status = postgres.perform_insert_or_update_returning_query(
             "update_payment_status",
-            (response.get("status"), int(rental_id), int(rental_id)),
+            (response.get("status"), f"""'{response.get("date_approved")}'""", int(rental_id), int(rental_id)),
         )
         expiration_date = postgres.perform_insert_or_update_returning_query(
             "update_rental_expiration_first",
-            (int(time), f"""'{response.get("date_approved")}'""", int(rental_id), int(rental_id)),
+            (int(time), int(rental_id), int(rental_id)),
         )[0]
         sse.publish(
             {
