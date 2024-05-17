@@ -33,13 +33,14 @@ app.add_middleware(
 
 @app.get("/api/teste")
 async def teste():
-    sse.publish(
-        {
-            "teste": "teste",
+    with flask_app.app_context():
+        sse.publish(
+            {
+                "teste": "teste",
 
-        },
-        type="type",
-    )
+            },
+            type="type",
+        )
     return "vc e um viadao"
 
 
