@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from flask import Flask
 from flask_cors import CORS
 from flask_sse import sse
+from fastapi.middleware.wsgi import WSGIMiddleware
 
 from payment.payment_handler import PaymentManager
 from postgres import Postgres
@@ -15,7 +16,10 @@ app = FastAPI()
 flask_app = Flask(__name__)
 CORS(flask_app)
 flask_app.config["REDIS_URL"] = "redis://redis"
-flask_app.register_blueprint(sse, url_prefix="/api/rental")
+flask_app.register_blueprint(sse, url_prefix="/sse/rental")
+
+app.mount("/sse", WSGIMiddleware(flask_app))
+
 
 origins = ["*"]
 app.add_middleware(
@@ -110,6 +114,14 @@ async def payment_updated_webhook(request: Request):
         0
     ][0]
 
+    if response.get("status") == "pending":
+        sse.publish(
+            {
+                "status": "pending",
+                "parasun_id": parasun_id,
+            },
+            type=rental_id,
+        )
     if response.get("status") == "approved":
         time, payment_status = postgres.perform_insert_or_update_returning_query(
             "update_payment_status",
