@@ -40,7 +40,7 @@ async def create_rental(parasun_id, time_rented):
     response, status_code = payment_handler.createPayment(time_rented=time_rented)
     if status_code not in [201, 200]:
         raise HTTPException(status_code=400, detail="error on payment_creation")
-    rental_id = postgres.perform_insert_or_update_returning_query("create_rental", (parasun_id, datetime.now(timezone.utc)))
+    rental_id = postgres.perform_insert_or_update_returning_query("create_rental", (parasun_id))
     postgres.perform_insert_or_update_query("create_payment",(response.get("id"), int(rental_id), int(time_rented), response.get("status")))
     return {"status":200, "rental_id":rental_id, "qr_code": response.get("point_of_interaction").get("transaction_data").get("qr_code")}
 
@@ -59,6 +59,7 @@ async def check_payment(rental_id):
             return expiration_date - timedelta(hours=3)
         else:
             return response.get("status")
+
 @app.get("/api/add_time/{rental_id}/{time_rented}")
 async def create_time_addition_payment(rental_id, time_rented):
     response, status_code = payment_handler.createPayment(time_rented=time_rented)
@@ -74,6 +75,8 @@ async def payment_updated_webhook(request: Request):
     print(json_body)
     payment_id = json_body.get("data").get("id")
     response, status_code = payment_handler.checkPayment(payment_id)
+    if status_code == 404:
+        return
     rental_id = postgres.perform_get_query("get_rental_from_payment", int(payment_id))[0][0]
     parasun_id = postgres.perform_get_query("get_parasun_from_rental", int(rental_id))[0][0]
     time, payment_status = postgres.perform_insert_or_update_returning_query("update_payment_status",
