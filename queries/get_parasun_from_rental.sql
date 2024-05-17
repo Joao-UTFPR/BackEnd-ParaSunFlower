@@ -1,0 +1,1 @@
+select parasun_id from parasun_rental where id = %d

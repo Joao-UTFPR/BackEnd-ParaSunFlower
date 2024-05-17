@@ -1,0 +1,1 @@
+select expiration_time from parasun_rental where id = '%s';

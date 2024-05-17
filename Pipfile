@@ -7,6 +7,11 @@ name = "pypi"
 fastapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 gunicorn = "*"
+psycopg2-binary = "*"
+requests = "*"
+flask = "*"
+flask-cors = "*"
+flask-sse = "*"
 
 [dev-packages]
 

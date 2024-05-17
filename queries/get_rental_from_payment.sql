@@ -1,0 +1,1 @@
+select rental_id from payment where id = '%d'
