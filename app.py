@@ -75,7 +75,7 @@ async def payment_updated_webhook(request: Request):
     payment_id = json_body.get("data").get("id")
     response, status_code = payment_handler.checkPayment(payment_id)
     rental_id = postgres.perform_get_query("get_rental_from_payment", int(payment_id))[0][0]
-    parasun_id = postgres.perform_get_query("get_parasun_from_rental", id(rental_id))[0][0]
+    parasun_id = postgres.perform_get_query("get_parasun_from_rental", int(rental_id))[0][0]
     time, payment_status = postgres.perform_insert_or_update_returning_query("update_payment_status",
                                                              (response.get("status"), int(rental_id), int(rental_id)))
     expiration_date = postgres.perform_insert_or_update_returning_query("update_rental_expiration_first",
