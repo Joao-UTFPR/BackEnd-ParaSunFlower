@@ -33,6 +33,13 @@ app.add_middleware(
 
 @app.get("/api/teste")
 async def teste():
+    sse.publish(
+        {
+            "teste": "teste",
+
+        },
+        type="type",
+    )
     return "vc e um viadao"
 
 
