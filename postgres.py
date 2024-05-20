@@ -10,7 +10,7 @@ class Postgres:
         )
         self.cursor = self.conn.cursor()
 
-    def perform_get_query(self, query_name, params):
+    def perform_get_query(self, query_name, params=()):
         with open("queries/" + query_name + ".sql", "r") as f:
             query = f.read()
         self.cursor.execute(query % params)

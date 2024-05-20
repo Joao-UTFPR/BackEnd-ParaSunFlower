@@ -46,6 +46,8 @@ async def teste():
 
 @app.post("/api/create_rental/{parasun_id}/{time_rented}")
 async def create_rental(parasun_id, time_rented):
+    if not isinstance(time_rented, int):
+        raise HTTPException(status_code=400, detail="time rentede should be INT")
     lat, long = postgres.perform_get_query("get_lat_long_from_parasun", parasun_id)[0]
     if get_wind_speeds(lat, long) > 19:
         return {"status": 400, "message": "wind speeds too high for parasun's function"}
@@ -137,7 +139,7 @@ async def payment_updated_webhook(request: Request):
         )
         expiration_date = postgres.perform_insert_or_update_returning_query(
             "update_rental_expiration_first",
-            (int(time), int(rental_id), int(rental_id)),
+            (int(time), int(rental_id), int(time), int(rental_id)),
         )[0]
         sse.publish(
             {
@@ -155,7 +157,11 @@ async def payment_updated_webhook(request: Request):
         sse.publish({"status": "cancelled"}, type=rental_id)
     return "ok"
 
-
+@app.get("/api/get_parasuns_positions")
+async def get_parasuns_positions():
+    positions_list = postgres.perform_get_query("get_parasuns_positions")
+    response = [{"latitude": position[0], "longitude":position[1]} for position in positions_list]
+    return response
 #
 #
 # @app.get("/hello/{name}")

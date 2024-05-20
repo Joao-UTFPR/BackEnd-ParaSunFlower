@@ -1,0 +1,1 @@
+select latitude, longitude from parasun;
