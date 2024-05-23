@@ -46,8 +46,8 @@ async def teste():
 
 @app.post("/api/create_rental/{parasun_id}/{time_rented}")
 async def create_rental(parasun_id, time_rented):
-    if not isinstance(time_rented, int):
-        raise HTTPException(status_code=400, detail="time rentede should be INT")
+    # if not isinstance(time_rented, int):
+    #     raise HTTPException(status_code=400, detail="time rentede should be INT")
     lat, long = postgres.perform_get_query("get_lat_long_from_parasun", parasun_id)[0]
     if get_wind_speeds(lat, long) > 19:
         return {"status": 400, "message": "wind speeds too high for parasun's function"}
@@ -162,6 +162,11 @@ async def get_parasuns_positions():
     positions_list = postgres.perform_get_query("get_parasuns_positions")
     response = [{"latitude": position[0], "longitude":position[1]} for position in positions_list]
     return response
+
+@app.post("/api/create_location_entry/{latitude}/{longitude}/{parasun_id}")
+async def create_location_entry(latitude, longitude, parasun_id):
+    postgres.perform_insert_or_update_query("create_location_entry", (parasun_id, latitude, longitude))
+    return "created"
 #
 #
 # @app.get("/hello/{name}")
