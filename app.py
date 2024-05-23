@@ -16,7 +16,7 @@ app = FastAPI()
 flask_app = Flask(__name__)
 CORS(flask_app)
 flask_app.config["REDIS_URL"] = "redis://localhost"
-flask_app.register_blueprint(sse, url_prefix="/sse/rental")
+flask_app.register_blueprint(sse, url_prefix="/sse")
 
 app.mount("/sse", WSGIMiddleware(flask_app))
 
@@ -37,7 +37,6 @@ async def teste():
         sse.publish(
             {
                 "teste": "teste",
-
             },
             type="publish",
         )
