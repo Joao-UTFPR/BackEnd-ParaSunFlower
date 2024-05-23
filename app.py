@@ -41,7 +41,7 @@ async def teste():
             },
             type="publish",
         )
-    return "vc e um viadao"
+    return "ola mundo"
 
 
 @app.post("/api/create_rental/{parasun_id}/{time_rented}")
@@ -147,14 +147,14 @@ async def payment_updated_webhook(request: Request):
                 "parasun_id": parasun_id,
                 "expiration_date": expiration_date,
             },
-            type=rental_id,
+            type="approved",
         )
     if response.get("status") == "cancelled":
         postgres.perform_insert_or_update_returning_query(
             "update_payment_status",
             (response.get("status"),"null", int(rental_id), int(rental_id)),
         )
-        sse.publish({"status": "cancelled"}, type=rental_id)
+        sse.publish({"status": "cancelled"}, type="cancelled")
     return "ok"
 
 @app.get("/api/get_parasuns_positions")
