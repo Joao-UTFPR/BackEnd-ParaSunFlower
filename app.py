@@ -19,7 +19,7 @@ CORS(flask_app)
 flask_app.config["REDIS_URL"] = "redis://localhost"
 flask_app.register_blueprint(sse, url_prefix="/sse/event")
 
-app.mount("/sse", WSGIMiddleware(flask_app))
+app.mount("/sse/event", WSGIMiddleware(flask_app))
 
 
 origins = ["*"]
