@@ -9,7 +9,7 @@ uvicorn = {extras = ["standard"], version = "*"}
 gunicorn = "*"
 psycopg2-binary = "*"
 requests = "*"
-flask = "*"
+flask = {extras = ["async"], version = "*"}
 flask-cors = "*"
 flask-sse = "*"
 black = "*"

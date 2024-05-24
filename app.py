@@ -1,7 +1,9 @@
+from asyncio import sleep
 from datetime import timedelta
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask
 from flask_cors import CORS
@@ -13,38 +15,43 @@ from postgres import Postgres
 
 payment_handler = PaymentManager()
 postgres = Postgres()
-app = FastAPI()
-flask_app = Flask(__name__)
-CORS(flask_app)
-flask_app.config["REDIS_URL"] = "redis://redis"
-flask_app.register_blueprint(sse, url_prefix="/sse/event")
+# app = FastAPI()
+app = Flask(__name__)
+CORS(app)
+app.config["REDIS_URL"] = "redis://localhost"
+app.register_blueprint(sse, url_prefix='/sse/event')
+# flask_app.run(debug=True, host='0.0.0.0', port=5000)
 
-app.mount("/sse/event", WSGIMiddleware(flask_app))
+#app.mount("/sse/event", WSGIMiddleware(flask_app))
 
 
 origins = ["*"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+# async def letras_generator():
+#     for letra in ['a', 'b', 'c']:
+#         yield letra
+#         await sleep(1)
 
 
-@app.get("/api/teste")
+@app.route("/api/teste", methods=['GET'])
 async def teste():
-    with flask_app.app_context():
-        sse.publish(
-            {
-                "teste": "teste",
-            },
-            type="publish",
-        )
-    return "ola mundo"
+    # with flask_app.app_context():
+    #     sse.publish(
+    #         {
+    #             "teste": "teste",
+    #         },
+    #         type="publish",
+    #     )
+    return "vc eh um viadao"
 
 
-@app.post("/api/create_rental/{parasun_id}/{time_rented}")
+@app.route("/api/create_rental/{parasun_id}/{time_rented}", methods=['POST'])
 async def create_rental(parasun_id, time_rented):
     # if not isinstance(time_rented, int):
     #     raise HTTPException(status_code=400, detail="time rentede should be INT")
@@ -70,7 +77,7 @@ async def create_rental(parasun_id, time_rented):
     }
 
 
-@app.get("/api/check_payment/{rental_id}")
+@app.route("/api/check_payment/{rental_id}", methods=["GET"])
 async def check_payment(rental_id):
     if (
         postgres.perform_get_query("get_latest_payment_status", rental_id)[0][0]
@@ -98,7 +105,7 @@ async def check_payment(rental_id):
         return response.get("status")
 
 
-@app.get("/api/add_time/{rental_id}/{time_rented}")
+@app.route("/api/add_time/{rental_id}/{time_rented}", methods=["GET"])
 async def create_time_addition_payment(rental_id, time_rented):
     response, status_code = payment_handler.createPayment(time_rented=time_rented)
     if status_code not in [201, 200]:
@@ -109,7 +116,7 @@ async def create_time_addition_payment(rental_id, time_rented):
     )
 
 
-@app.post("/api/update_payment", status_code=200)
+@app.route("/api/update_payment", methods=["POST"])
 async def payment_updated_webhook(request: Request):
     json_body = await request.json()
     print(json_body)
@@ -124,7 +131,7 @@ async def payment_updated_webhook(request: Request):
         0
     ][0]
 
-    with flask_app.app_context():
+    with app.app_context():
         if response.get("status") == "pending":
             sse.publish(
                 {
@@ -158,13 +165,13 @@ async def payment_updated_webhook(request: Request):
             sse.publish({"status": "cancelled"}, type="cancelled")
     return "ok"
 
-@app.get("/api/get_parasuns_positions")
+@app.route("/api/get_parasuns_positions", methods=["GET"])
 async def get_parasuns_positions():
     positions_list = postgres.perform_get_query("get_parasuns_positions")
     response = [{"latitude": position[0], "longitude":position[1]} for position in positions_list]
     return response
 
-@app.post("/api/create_location_entry/{latitude}/{longitude}/{parasun_id}")
+@app.route("/api/create_location_entry/{latitude}/{longitude}/{parasun_id}", methods=["POST"])
 async def create_location_entry(latitude, longitude, parasun_id):
     postgres.perform_insert_or_update_query("create_location_entry", (parasun_id, latitude, longitude))
     return "created"
