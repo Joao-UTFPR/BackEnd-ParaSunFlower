@@ -1,14 +1,15 @@
+from datetime import timedelta
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask
 from flask_cors import CORS
 from flask_sse import sse
-from fastapi.middleware.wsgi import WSGIMiddleware
 
+from open_wheater import get_wind_speeds
 from payment.payment_handler import PaymentManager
 from postgres import Postgres
-from datetime import datetime, timezone, timedelta
-from open_wheater import get_wind_speeds
 
 payment_handler = PaymentManager()
 postgres = Postgres()
@@ -16,7 +17,7 @@ app = FastAPI()
 flask_app = Flask(__name__)
 CORS(flask_app)
 flask_app.config["REDIS_URL"] = "redis://localhost"
-flask_app.register_blueprint(sse, url_prefix="/sse")
+flask_app.register_blueprint(sse, url_prefix="/sse/event")
 
 app.mount("/sse", WSGIMiddleware(flask_app))
 
