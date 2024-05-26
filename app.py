@@ -92,7 +92,7 @@ async def check_payment(rental_id):
         )[0]
         expiration_date = postgres.perform_insert_or_update_returning_query(
             "update_rental_expiration_first",
-            (int(time), int(rental_id), int(rental_id)),
+            (int(time), int(rental_id), int(time), int(rental_id)),
         )
         return {"expiration_date":expiration_date, "payment_status": response.get("status"), "payment_id": payment_id}
     else:
