@@ -14,12 +14,12 @@ from postgres import Postgres
 payment_handler = PaymentManager()
 postgres = Postgres()
 app = FastAPI()
-flask_app = Flask(__name__)
-CORS(flask_app)
-flask_app.config["REDIS_URL"] = "redis://redis"
-flask_app.register_blueprint(sse, url_prefix="/sse/event")
+# flask_app = Flask(__name__)
+# CORS(flask_app)
+# flask_app.config["REDIS_URL"] = "redis://redis"
+# flask_app.register_blueprint(sse, url_prefix="/sse/event")
 
-app.mount("/sse/event", WSGIMiddleware(flask_app))
+# app.mount("/sse/event", WSGIMiddleware(flask_app))
 
 
 origins = ["*"]
@@ -34,13 +34,13 @@ app.add_middleware(
 
 @app.get("/api/teste")
 async def teste():
-    with flask_app.app_context():
-        sse.publish(
-            {
-                "teste": "teste",
-            },
-            type="publish",
-        )
+    # with flask_app.app_context():
+    #     sse.publish(
+    #         {
+    #             "teste": "teste",
+    #         },
+    #         type="publish",
+    #     )
     return "ola mundo"
 
 
@@ -93,9 +93,9 @@ async def check_payment(rental_id):
             "update_rental_expiration_first",
             (int(time), int(rental_id), int(rental_id)),
         )
-        return expiration_date - timedelta(hours=3)
+        return {"expiration_date":expiration_date, "payment_status": response.get("status"), "payment_id": payment_id}
     else:
-        return response.get("status")
+        return {"payment_status": response.get("status"), "payment_id": payment_id}
 
 
 @app.get("/api/add_time/{rental_id}/{time_rented}")
