@@ -1,3 +1,4 @@
+import datetime
 from datetime import timedelta
 
 from fastapi import FastAPI, HTTPException, Request
@@ -87,7 +88,7 @@ async def check_payment(rental_id):
     if response.get("status") == "approved":
         time = postgres.perform_insert_or_update_returning_query(
             "update_payment_status",
-            (response.get("status"), int(rental_id), int(rental_id)),
+            (response.get("status"), f"""'{response.get("date_approved")}'""", int(rental_id), int(rental_id)),
         )
         expiration_date = postgres.perform_insert_or_update_returning_query(
             "update_rental_expiration_first",
@@ -109,54 +110,54 @@ async def create_time_addition_payment(rental_id, time_rented):
     )
 
 
-@app.post("/api/update_payment", status_code=200)
-async def payment_updated_webhook(request: Request):
-    json_body = await request.json()
-    print(json_body)
-    payment_id = json_body.get("data").get("id")
-    response, status_code = payment_handler.checkPayment(payment_id)
-    if status_code == 404:
-        return
-    rental_id = postgres.perform_get_query("get_rental_from_payment", int(payment_id))[
-        0
-    ][0]
-    parasun_id = postgres.perform_get_query("get_parasun_from_rental", int(rental_id))[
-        0
-    ][0]
-
-    with flask_app.app_context():
-        if response.get("status") == "pending":
-            sse.publish(
-                {
-                    "status": "pending",
-                    "parasun_id": parasun_id,
-                },
-                type=rental_id,
-            )
-        if response.get("status") == "approved":
-            time, payment_status = postgres.perform_insert_or_update_returning_query(
-                "update_payment_status",
-                (response.get("status"), f"""'{response.get("date_approved")}'""", int(rental_id), int(rental_id)),
-            )
-            expiration_date = postgres.perform_insert_or_update_returning_query(
-                "update_rental_expiration_first",
-                (int(time), int(rental_id), int(time), int(rental_id)),
-            )[0]
-            sse.publish(
-                {
-                    "status": "approved",
-                    "parasun_id": parasun_id,
-                    "expiration_date": expiration_date,
-                },
-                type="approved",
-            )
-        if response.get("status") == "cancelled":
-            postgres.perform_insert_or_update_returning_query(
-                "update_payment_status",
-                (response.get("status"),"null", int(rental_id), int(rental_id)),
-            )
-            sse.publish({"status": "cancelled"}, type="cancelled")
-    return "ok"
+# @app.post("/api/update_payment", status_code=200)
+# async def payment_updated_webhook(request: Request):
+#     json_body = await request.json()
+#     print(json_body)
+#     payment_id = json_body.get("data").get("id")
+#     response, status_code = payment_handler.checkPayment(payment_id)
+#     if status_code == 404:
+#         return
+#     rental_id = postgres.perform_get_query("get_rental_from_payment", int(payment_id))[
+#         0
+#     ][0]
+#     parasun_id = postgres.perform_get_query("get_parasun_from_rental", int(rental_id))[
+#         0
+#     ][0]
+#
+#     with flask_app.app_context():
+#         if response.get("status") == "pending":
+#             sse.publish(
+#                 {
+#                     "status": "pending",
+#                     "parasun_id": parasun_id,
+#                 },
+#                 type=rental_id,
+#             )
+#         if response.get("status") == "approved":
+#             time, payment_status = postgres.perform_insert_or_update_returning_query(
+#                 "update_payment_status",
+#                 (response.get("status"), f"""'{response.get("date_approved")}'""", int(rental_id), int(rental_id)),
+#             )
+#             expiration_date = postgres.perform_insert_or_update_returning_query(
+#                 "update_rental_expiration_first",
+#                 (int(time), int(rental_id), int(time), int(rental_id)),
+#             )[0]
+#             sse.publish(
+#                 {
+#                     "status": "approved",
+#                     "parasun_id": parasun_id,
+#                     "expiration_date": expiration_date,
+#                 },
+#                 type="approved",
+#             )
+#         if response.get("status") == "cancelled":
+#             postgres.perform_insert_or_update_returning_query(
+#                 "update_payment_status",
+#                 (response.get("status"),"null", int(rental_id), int(rental_id)),
+#             )
+#             sse.publish({"status": "cancelled"}, type="cancelled")
+#     return "ok"
 
 @app.get("/api/get_parasuns_positions")
 async def get_parasuns_positions():
