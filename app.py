@@ -86,10 +86,10 @@ async def check_payment(rental_id):
     if status_code not in [200, 201]:
         raise HTTPException(status_code=status_code, detail="error on payment_check")
     if response.get("status") == "approved":
-        time = postgres.perform_insert_or_update_returning_query(
+        time, status = postgres.perform_insert_or_update_returning_query(
             "update_payment_status",
             (response.get("status"), f"""'{response.get("date_approved")}'""", int(rental_id), int(rental_id)),
-        )
+        )[0]
         expiration_date = postgres.perform_insert_or_update_returning_query(
             "update_rental_expiration_first",
             (int(time), int(rental_id), int(rental_id)),
